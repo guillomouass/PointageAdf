@@ -2,8 +2,15 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#002D62">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pointage ADF">
+<link rel="apple-touch-icon" href="https://via.placeholder.com/192/002D62/FFFFFF?text=ADF">
+<link rel="manifest" id="manifest-link">
+
 <title>ADF — Pointage Expert</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -72,6 +79,9 @@ html, body { height: 100%; font-family: 'Barlow', sans-serif; background: #001a3
 @media (min-width: 500px) {
     .responsive-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* Petit badge pour indiquer le mode brouillon */
+.draft-badge { font-size: 11px; background: var(--orange); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 700; margin-left: 10px; display: none; }
 </style>
 </head>
 <body>
@@ -80,11 +90,11 @@ html, body { height: 100%; font-family: 'Barlow', sans-serif; background: #001a3
   <div class="screen active" id="screen1" style="background:var(--bleu); justify-content:center; align-items:center; color:white; text-align:center;">
     <h1 style="font-size:55px; font-family:'Barlow Condensed'">GROUPE ADF</h1>
     <p style="letter-spacing:3px; opacity:0.7; margin-bottom:20px">POINTAGE HEBDOMADAIRE</p>
-    <button class="btn-compact" onclick="goTo(1,2)">COMMENCER</button>
+    <button class="btn-compact" id="btn_start" onclick="goTo(1,2)">COMMENCER</button>
   </div>
 
   <div class="screen" id="screen2">
-    <div class="s-header"><div class="header-row"><button class="btn-back" onclick="goTo(2,1)">←</button><span>CONFIGURATION</span></div></div>
+    <div class="s-header"><div class="header-row"><button class="btn-back" onclick="goTo(2,1)">←</button><span>CONFIGURATION</span><span id="draft_indicator" class="draft-badge">BROUILLON</span></div></div>
     <div style="padding:20px; display:flex; flex-direction:column; gap:15px; overflow-y: auto;">
       <div class="intervention-card" style="padding:20px">
         <label class="field-label">Technicien</label>
@@ -98,6 +108,7 @@ html, body { height: 100%; font-family: 'Barlow', sans-serif; background: #001a3
         <input type="date" class="field-input" id="sel_semaine">
       </div>
       <button class="btn-primary" id="btn_config_ok" onclick="goToRecap()" disabled>VOIR MA SEMAINE</button>
+      <button onclick="resetApp(true)" style="background:none; border:none; color:var(--rouge); font-weight:700; margin-top:10px; cursor:pointer;">EFFACER LE BROUILLON ET RECOMMENCER</button>
     </div>
   </div>
 
@@ -122,15 +133,14 @@ html, body { height: 100%; font-family: 'Barlow', sans-serif; background: #001a3
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
       <h2 style="font-family:'Barlow Condensed'; font-size: 28px; margin-bottom: 10px; color: var(--bleu)">ENVOI RÉUSSI !</h2>
-      <p style="color: var(--gris-label); margin-bottom: 30px;">Ton pointage a bien été envoyé.</p>
-      <button class="btn-compact" style="background: var(--bleu); color: white; min-width: 200px;" onclick="resetApp()">RETOURNER AU MENU</button>
+      <p style="color: var(--gris-label); margin-bottom: 30px;">Ton pointage a bien été envoyé et ton brouillon a été vidé.</p>
+      <button class="btn-compact" style="background: var(--bleu); color: white; min-width: 200px;" onclick="resetApp(false)">RETOURNER AU MENU</button>
     </div>
   </div>
 
 </div>
 
 <script>
-// --- VOICI VOTRE LIEN INTÉGRÉ ---
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzURcbyr1eKH04vMp7f8AmjuobUIcytoVBmNyEqKD_9t43Ie3rN_tMZwOPZRkUOmUs/exec'; 
 
 const SITES_DATA = [
@@ -153,6 +163,20 @@ const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
 let state = { tech: '', semaine: '', semaineDays: [], currentDay: null };
 
+// --- GÉNÉRATION DYNAMIQUE DE LA PWA (MANIFEST) ---
+const manifestJSON = {
+    "name": "Pointage ADF Expert",
+    "short_name": "Pointage ADF",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#001a38",
+    "theme_color": "#002D62",
+    "icons": [{"src": "https://via.placeholder.com/512/002D62/FFFFFF?text=ADF", "sizes": "512x512", "type": "image/png"}]
+};
+const blob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+document.querySelector('#manifest-link').setAttribute('href', URL.createObjectURL(blob));
+// --------------------------------------------------
+
 function escapeHTML(str) {
     if (!str) return '';
     return String(str).replace(/[&<>'"]/g, match => ({
@@ -160,24 +184,100 @@ function escapeHTML(str) {
     }[match]));
 }
 
+// Fonction pour trouver la date du Lundi de la semaine en cours
+function getMondayOfCurrentWeek() {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+    const yyyy = monday.getFullYear();
+    const mm = String(monday.getMonth() + 1).padStart(2, '0');
+    const dd = String(monday.getDate()).padStart(2, '0');
+    return { raw: `${yyyy}-${mm}-${dd}`, formatted: `${dd}/${mm}/${yyyy}` };
+}
+
+// Fonction de Sauvegarde Automatique
+function saveDraft() {
+    localStorage.setItem('adf_draft', JSON.stringify(state));
+    if(state.semaineDays.length > 0 || (state.currentDay && state.currentDay.interventions.length > 0)) {
+        document.getElementById('draft_indicator').style.display = 'inline-block';
+    } else {
+        document.getElementById('draft_indicator').style.display = 'none';
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('sel_tech').addEventListener('change', e => {
+    const selTech = document.getElementById('sel_tech');
+    const selSemaine = document.getElementById('sel_semaine');
+    
+    // 1. On charge la mémoire du téléphone (Brouillon + Nom)
+    const savedTech = localStorage.getItem('savedTech');
+    const draft = localStorage.getItem('adf_draft');
+    
+    if (draft) {
+        try {
+            const parsedDraft = JSON.parse(draft);
+            if(parsedDraft.semaineDays || parsedDraft.currentDay) {
+                state = parsedDraft;
+                // On met à jour l'interface avec les données du brouillon
+                selTech.value = state.tech;
+                if(state.semaine) {
+                    const [d, m, y] = state.semaine.split('/');
+                    selSemaine.value = `${y}-${m}-${d}`;
+                }
+                document.getElementById('draft_indicator').style.display = 'inline-block';
+                document.getElementById('btn_start').textContent = "REPRENDRE LE BROUILLON";
+            }
+        } catch(e) {}
+    } else {
+        // Pas de brouillon ? On utilise le nom sauvegardé et on met le lundi auto
+        if (savedTech) {
+            selTech.value = savedTech;
+            state.tech = savedTech;
+        }
+        const monday = getMondayOfCurrentWeek();
+        selSemaine.value = monday.raw;
+        state.semaine = monday.formatted;
+    }
+    
+    document.getElementById('btn_config_ok').disabled = !state.tech;
+
+    // 2. Les événements de changement
+    selTech.addEventListener('change', e => {
         state.tech = e.target.value;
         document.getElementById('btn_config_ok').disabled = !state.tech;
+        if(state.tech) localStorage.setItem('savedTech', state.tech);
+        saveDraft();
     });
-    document.getElementById('sel_semaine').addEventListener('change', e => {
-        const [y,m,d] = e.target.value.split('-');
-        state.semaine = `${d}/${m}/${y}`;
+
+    selSemaine.addEventListener('change', e => {
+        if(e.target.value) {
+            const [y,m,d] = e.target.value.split('-');
+            state.semaine = `${d}/${m}/${y}`;
+            saveDraft();
+        }
     });
 });
 
-function resetApp() {
-    state = { tech: '', semaine: '', semaineDays: [], currentDay: null };
-    document.getElementById('sel_tech').value = '';
-    document.getElementById('sel_semaine').value = '';
-    document.getElementById('btn_config_ok').disabled = true;
+function resetApp(forceDeleteDraft = false) {
+    if (forceDeleteDraft) {
+        if(!confirm("Êtes-vous sûr de vouloir supprimer votre saisie en cours ?")) return;
+        localStorage.removeItem('adf_draft');
+    }
+    
+    state = { tech: localStorage.getItem('savedTech') || '', semaine: '', semaineDays: [], currentDay: null };
+    document.getElementById('sel_tech').value = state.tech;
+    
+    const monday = getMondayOfCurrentWeek();
+    document.getElementById('sel_semaine').value = monday.raw;
+    state.semaine = monday.formatted;
+    
+    document.getElementById('btn_config_ok').disabled = !state.tech;
     document.getElementById('interventions_list').innerHTML = '';
     document.getElementById('week_body').innerHTML = '';
+    document.getElementById('draft_indicator').style.display = 'none';
+    document.getElementById('btn_start').textContent = "COMMENCER";
+    
     goTo(5, 1);
 }
 
@@ -248,6 +348,7 @@ function addIntervention() {
     const newInv = { id: uniqueId, mission:'Normale', site:'', client:'', contrat:'CONTRAT', hDebut:'', hFin:'', hf_raw:'', desc:'', hAppel:'', hArrivee:'', j1:false, arrondi:false, binome:'' };
     state.currentDay.interventions.push(newInv);
     renderCard(newInv.id);
+    saveDraft();
 }
 
 function renderCard(id) {
@@ -317,6 +418,7 @@ function updateMode(id, field, value) {
     const list = document.getElementById('interventions_list');
     list.innerHTML = '';
     state.currentDay.interventions.forEach(i => renderCard(i.id));
+    saveDraft();
 }
 
 function onSiteChange(id, sel) {
@@ -327,6 +429,7 @@ function onSiteChange(id, sel) {
     const headClient = document.getElementById(`cl_head_${id}`);
     if(headClient) headClient.textContent = inv.client || 'Site...';
     checkTerminer();
+    saveDraft();
 }
 
 function onFinChange(id, val) {
@@ -339,6 +442,7 @@ function onFinChange(id, val) {
         inv.j1 = false;
         document.getElementById(`st_${id}`).innerHTML = '';
         checkTerminer();
+        saveDraft();
         return;
     }
     
@@ -361,6 +465,7 @@ function onFinChange(id, val) {
     const st = document.getElementById(`st_${id}`);
     st.innerHTML = (inv.j1?'<span class="alert-tag j1">⚠ FIN J+1</span> ':'') + (inv.arrondi?`<span class="alert-tag arrondi">⏱ ARRONDI À ${inv.hFin}</span>`:'');
     checkTerminer();
+    saveDraft();
 }
 
 function toggleAccordion(id) {
@@ -372,6 +477,7 @@ function updateInv(id, f, v) {
     const inv = state.currentDay.interventions.find(i => i.id === id);
     if(inv) inv[f] = v; 
     checkTerminer(); 
+    saveDraft();
 }
 
 function updateTime(id, f, v) { 
@@ -385,31 +491,26 @@ function triggerMic(id) { document.getElementById(`txt_${id}`).focus(); }
 function deleteCard(id) {
     if(state.currentDay.interventions.length > 1) {
         state.currentDay.interventions = state.currentDay.interventions.filter(i => i.id !== id);
-        
         const list = document.getElementById('interventions_list');
         list.innerHTML = '';
         state.currentDay.interventions.forEach(inv => renderCard(inv.id));
-        
         checkTerminer();
+        saveDraft();
     }
 }
 
 function checkTerminer() {
     const ok = state.currentDay.interventions.every(i => i.site && i.hFin);
     const btn = document.getElementById('btn_terminer');
-    
     btn.disabled = !ok;
-    
-    if (!ok) {
-        btn.textContent = "SAISIE INCOMPLÈTE";
-    } else {
-        btn.textContent = "VALIDER LA JOURNÉE";
-    }
+    if (!ok) { btn.textContent = "SAISIE INCOMPLÈTE"; } else { btn.textContent = "VALIDER LA JOURNÉE"; }
 }
 
 function terminerJournee() {
     const idx = state.semaineDays.findIndex(d => d.jourLabel === state.currentDay.jourLabel);
     if(idx > -1) state.semaineDays[idx] = state.currentDay; else state.semaineDays.push(state.currentDay);
+    state.currentDay = null; // On vide la saisie du jour en cours
+    saveDraft();
     renderWeek(); goTo(3, 4);
 }
 
@@ -417,23 +518,21 @@ async function envoyerSemaine() {
     const btn = document.getElementById('btn_envoyer');
     btn.disabled = true; btn.textContent = "ENVOI EN COURS...";
     const payload = { tech: state.tech, semaine: state.semaine, jours: state.semaineDays };
-    
     try {
-        const response = await fetch(APPS_SCRIPT_URL, { 
+        await fetch(APPS_SCRIPT_URL, { 
             method: 'POST', 
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8'
-            },
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload) 
         });
         
-        if (!response.ok) throw new Error("Erreur serveur Google");
+        // SUCCÈS : On supprime le brouillon (mais on garde le nom du technicien !)
+        localStorage.removeItem('adf_draft');
         
         goTo(4, 5);
     } catch(e) { 
-        alert("Erreur de connexion. Vérifiez votre réseau ou le lien Apps Script."); 
-        btn.disabled = false; 
-        btn.textContent = "ENVOYER AU BUREAU"; 
+        alert("Erreur de connexion. L'envoi a échoué mais vos données sont sauvées dans le brouillon."); 
+        btn.disabled = false; btn.textContent = "ENVOYER AU BUREAU"; 
     }
 }
 </script>
