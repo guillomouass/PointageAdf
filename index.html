@@ -10,39 +10,33 @@
     <meta name="apple-mobile-web-app-title" content="Pointage ADF">
     
     <title>ADF — Pointage Expert</title>
+    
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/002D62/FFFFFF?text=ADF">
+    <link rel="manifest" id="manifest-link">
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bleu: #002D62;
-            --gris-fond: #f0f3f8;
-            --gris-border: #d8e0ee; 
-            --gris-label: #6b7fa3;
-            --texte: #0d1e3a;
-            --vert: #16a34a; 
-            --rouge: #dc2626;
-            --orange: #f59e0b;
-            --radius: 14px;
+            --bleu: #002D62; --gris-fond: #f0f3f8; --gris-border: #d8e0ee; 
+            --gris-label: #6b7fa3; --texte: #0d1e3a; --vert: #16a34a; 
+            --rouge: #dc2626; --orange: #f59e0b; --radius: 14px;
         }
 
-        *, *::before, *::after { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-
-        /* Correction Responsive : On utilise dvh pour la hauteur dynamique */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
+        /* Correction de la hauteur : 100vh = sécurité, 100dvh = plein écran moderne */
         html, body { 
+            height: 100vh;
             height: 100dvh; 
             width: 100%;
             font-family: 'Barlow', sans-serif; 
-            background: var(--bleu); /* Pour fondre les bords sur mobile */
+            background: var(--bleu); 
             overflow: hidden; 
         }
 
         #app { 
             width: 100%; 
+            height: 100vh;
             height: 100dvh; 
             max-width: 700px; 
             margin: 0 auto; 
@@ -52,79 +46,26 @@
             overflow: hidden; 
         }
 
-        .screen { 
-            position: absolute; 
-            inset: 0; 
-            display: none; 
-            flex-direction: column; 
-            background: var(--gris-fond); 
-        }
-        
-        .screen.active { 
-            display: flex; 
-            animation: fadeIn .22s ease both; 
-        }
-        
+        .screen { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--gris-fond); }
+        .screen.active { display: flex; animation: fadeIn .22s ease both; }
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
-        /* Gestion de la "Safe Area" (encoche iPhone) */
-        .s-header { 
-            background: var(--bleu); 
-            padding: calc(13px + env(safe-area-inset-top)) 16px 13px; 
-            color: white; 
-            flex-shrink: 0; 
-            z-index: 30; 
-        }
-
+        .s-header { background: var(--bleu); padding: calc(13px + env(safe-area-inset-top)) 16px 13px; color: white; flex-shrink: 0; z-index: 30; }
         .header-row { display: flex; align-items: center; gap: 12px; }
+        .btn-back { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        /* Défilement fluide rétabli pour mobile */
+        .interventions-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 140px; display: flex; flex-direction: column; gap: 10px; }
         
-        .btn-back { 
-            background: rgba(255,255,255,0.1); 
-            border: none; 
-            color: white; 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-
-        .interventions-container { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 12px 12px 140px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-        }
-
-        .intervention-card { 
-            background: white; 
-            border-radius: var(--radius); 
-            border: .5px solid var(--gris-border); 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            overflow: hidden; 
-        }
-
-        .card-header { 
-            background: var(--bleu); 
-            padding: 10px 14px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            cursor: pointer; 
-        }
-
+        .intervention-card { background: white; border-radius: var(--radius); border: .5px solid var(--gris-border); box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+        .card-header { background: var(--bleu); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
         .card-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: white; font-size: 14px; }
         .card-client-badge { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
-        
         .card-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
         .card-body.collapsed { display: none; }
 
         .field-label { font-size: 10px; font-weight: 700; color: var(--gris-label); margin-bottom: 4px; display: block; text-transform: uppercase; }
         .field-input { width: 100%; padding: 11px; border: 1.5px solid var(--gris-border); border-radius: 8px; font-family: inherit; font-size: 16px; outline: none; background: #f8fafd; color: var(--texte); }
-
         .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .responsive-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 
@@ -135,38 +76,14 @@
         .seg-btn.active.contrat { background: var(--bleu); color: white; }
         .seg-btn.active.hc { background: var(--rouge); color: white; }
 
-        .textarea-field { width: 100%; padding: 10px; border: 1.5px solid var(--gris-border); border-radius: 8px; font-family: inherit; font-size: 16px; resize: none; min-height: 90px; background: #f8fafd; outline: none; }
+        .textarea-wrap { position: relative; }
+        .textarea-field { width: 100%; padding: 10px; padding-right: 40px; border: 1.5px solid var(--gris-border); border-radius: 8px; font-family: inherit; font-size: 16px; resize: none; min-height: 90px; background: #f8fafd; outline: none; }
+        .mic-btn { position: absolute; right: 8px; bottom: 8px; width: 32px; height: 32px; border-radius: 50%; background: var(--bleu); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.8; }
 
-        /* Barre du bas adaptée aux Safe Areas */
-        .bottom-bar { 
-            position: absolute; 
-            bottom: 0; left: 0; right: 0; 
-            background: rgba(255,255,255,0.95); 
-            backdrop-filter: blur(10px); 
-            padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            border-top: 1px solid var(--gris-border); 
-            z-index: 40; 
-        }
-
-        .btn-add { width: 54px; height: 54px; border-radius: 50%; background: white; border: 2px solid var(--bleu); color: var(--bleu); font-size: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        
-        .btn-primary { 
-            flex: 1; 
-            padding: 16px; 
-            background: var(--bleu); 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-family: 'Barlow Condensed', sans-serif; 
-            font-weight: 700; 
-            font-size: 17px; 
-        }
-        
+        .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--gris-border); z-index: 40; }
+        .btn-add { width: 54px; height: 54px; border-radius: 50%; background: white; border: 2px solid var(--bleu); color: var(--bleu); font-size: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;}
+        .btn-primary { flex: 1; padding: 16px; background: var(--bleu); color: white; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; cursor: pointer;}
         .btn-primary:disabled { background: #c0cce0; }
-
         .btn-compact { background: white; color: var(--bleu); border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; padding: 10px 25px; cursor: pointer; min-width: 150px; }
 
         .alert-tag { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; margin-right: 5px; }
@@ -175,29 +92,10 @@
 
         .success-content { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 30px; }
         .success-icon { width: 80px; height: 80px; background: var(--vert); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-
         .draft-badge { font-size: 11px; background: var(--orange); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 700; margin-left: 10px; display: none; }
 
         @media (min-width: 500px) {
             .responsive-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        /* --- APPARITION DU CURSEUR (SCROLLBAR) --- */
-        .interventions-container, .week-body, #screen2 > div {
-            -webkit-overflow-scrolling: touch; /* Rend le glissement très fluide sur iPhone */
-        }
-        ::-webkit-scrollbar {
-            width: 8px; /* Largeur du curseur */
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 45, 98, 0.3); /* Couleur bleu ADF semi-transparente */
-            border-radius: 10px; /* Bords arrondis */
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 45, 98, 0.6); /* Devient plus foncé si on clique dessus */
         }
     </style>
 </head>
@@ -219,7 +117,7 @@
                 <span id="draft_indicator" class="draft-badge">BROUILLON</span>
             </div>
         </div>
-        <div style="padding:20px; display:flex; flex-direction:column; gap:15px; overflow-y: auto;">
+        <div style="padding:20px; display:flex; flex-direction:column; gap:15px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
             <div class="intervention-card" style="padding:20px">
                 <label class="field-label">Technicien</label>
                 <select class="field-input" id="sel_tech">
@@ -232,7 +130,7 @@
                 <input type="date" class="field-input" id="sel_semaine">
             </div>
             <button class="btn-primary" id="btn_config_ok" onclick="goToRecap()" disabled>VOIR MA SEMAINE</button>
-            <button onclick="resetApp(true)" style="background:none; border:none; color:var(--rouge); font-weight:700; margin-top:15px; cursor:pointer; font-size:13px;">✕ EFFACER LE BROUILLON ET RECOMMENCER</button>
+            <button onclick="resetApp(true)" style="background:none; border:none; color:var(--rouge); font-weight:700; margin-top:15px; cursor:pointer; font-size:13px;">✕ EFFACER LE BROUILLON</button>
         </div>
     </div>
 
@@ -263,7 +161,7 @@
                 </div>
             </div>
         </div>
-        <div class="week-body" id="week_body" style="padding:20px; overflow-y:auto; flex:1; display: flex; flex-direction: column; gap:12px;"></div>
+        <div class="week-body" id="week_body" style="padding:20px; overflow-y:auto; -webkit-overflow-scrolling: touch; flex:1; display: flex; flex-direction: column; gap:12px;"></div>
         <div style="padding:15px; background:white; border-top: 1px solid var(--gris-border); padding-bottom: calc(15px + env(safe-area-inset-bottom));">
             <button class="btn-primary" id="btn_envoyer" onclick="envoyerSemaine()" disabled style="background:var(--vert); width:100%">ENVOYER AU BUREAU</button>
         </div>
@@ -283,6 +181,19 @@
 </div>
 
 <script>
+    // Fichier Manifest auto-généré pour l'installation en icône
+    const manifestJSON = {
+        "name": "Pointage ADF",
+        "short_name": "ADF Pointage",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#001a38",
+        "theme_color": "#002D62",
+        "icons": [{"src": "https://via.placeholder.com/512/002D62/FFFFFF?text=ADF", "sizes": "512x512", "type": "image/png"}]
+    };
+    const blob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+    document.querySelector('#manifest-link').setAttribute('href', URL.createObjectURL(blob));
+
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzURcbyr1eKH04vMp7f8AmjuobUIcytoVBmNyEqKD_9t43Ie3rN_tMZwOPZRkUOmUs/exec'; 
 
     const SITES_DATA = [
@@ -337,7 +248,7 @@
             try {
                 const parsed = JSON.parse(draft);
                 state = parsed;
-                selTech.value = state.tech;
+                if(state.tech) selTech.value = state.tech;
                 if(state.semaine) {
                     const [d, m, y] = state.semaine.split('/');
                     selSemaine.value = `${y}-${m}-${d}`;
@@ -380,7 +291,7 @@
         document.getElementById('week_body').innerHTML = '';
         document.getElementById('draft_indicator').style.display = 'none';
         document.getElementById('btn_start').textContent = "COMMENCER";
-        goTo(5, 1);
+        if(force) goTo(2, 2); else goTo(5, 1);
     }
 
     function goTo(f, t) {
@@ -406,12 +317,12 @@
             const card = document.createElement('div');
             card.style.cssText = "background:white; padding:18px; border-radius:12px; border:1px solid #d8e0ee; display:flex; justify-content:space-between; align-items:center;";
             card.innerHTML = `<div><strong>${day.jourLabel}</strong><br><small style="color:var(--gris-label)">${day.interventions.length} site(s)</small></div>
-                              <button onclick="modifierJournee(${idx})" style="color:var(--bleu); border:1px solid; padding:8px 16px; border-radius:8px; background:none; font-weight:700;">MODIFIER</button>`;
+                              <button onclick="modifierJournee(${idx})" style="color:var(--bleu); border:1px solid; padding:8px 16px; border-radius:8px; background:none; font-weight:700; cursor:pointer;">MODIFIER</button>`;
             body.appendChild(card);
         });
         if(state.semaineDays.length < 5) {
             const btn = document.createElement('button');
-            btn.className = "btn-primary"; btn.style.cssText = "background:none; border:2px dashed #ccc; color:#888; margin-top:10px;";
+            btn.className = "btn-primary"; btn.style.cssText = "background:none; border:2px dashed #ccc; color:#888; margin-top:10px; cursor:pointer;";
             btn.textContent = "+ AJOUTER LE " + JOURS[state.semaineDays.length].toUpperCase();
             btn.onclick = () => ouvrirJournee(state.semaineDays.length);
             body.appendChild(btn);
@@ -491,9 +402,12 @@
                 <div class="field-wrap"><label class="field-label">Heure Fin (arrondi ¼h)</label><input type="time" class="field-input" value="${inv.hf_raw || ''}" onchange="onFinChange(${id},this.value)"></div>
                 <div id="st_${id}">${inv.j1?'<span class="alert-tag j1">⚠ FIN J+1</span>':''}${inv.arrondi?`<span class="alert-tag arrondi">⏱ ARRONDI À ${inv.hFin}</span>`:''}</div>
                 <div class="field-wrap"><label class="field-label">Description</label>
-                    <textarea class="textarea-field" oninput="updateInv(${id},'desc',this.value)" placeholder="Détaillez vos travaux...">${escapeHTML(inv.desc)}</textarea>
+                    <div class="textarea-wrap">
+                        <textarea class="textarea-field" id="txt_${id}" oninput="updateInv(${id},'desc',this.value)" placeholder="Détaillez vos travaux...">${escapeHTML(inv.desc)}</textarea>
+                        <button class="mic-btn" onclick="triggerMic(${id})"><svg width="14" height="14" viewBox="0 0 12 12" fill="none"><rect x="4" y="0" width="4" height="7" rx="2" fill="white"/><path d="M2 6c0 2.2 1.8 4 4 4s4-1.8 4-4" stroke="white" stroke-width="1.2" fill="none"/></svg></button>
+                    </div>
                 </div>
-                <button onclick="deleteCard(${id})" style="background:none; border:none; color:var(--rouge); font-size:11px; font-weight:700; text-align: left;">✕ SUPPRIMER L'INTERVENTION</button>
+                <button onclick="deleteCard(${id})" style="background:none; border:none; color:var(--rouge); font-size:11px; font-weight:700; text-align: left; cursor:pointer;">✕ SUPPRIMER L'INTERVENTION</button>
             </div>
         `;
         list.appendChild(card); checkTerminer();
@@ -539,6 +453,7 @@
 
     function updateInv(id, f, v) { const i = state.currentDay.interventions.find(x => x.id === id); if(i) i[f] = v; checkTerminer(); saveDraft(); }
     function updateTime(id, f, v) { updateInv(id, f, v); const i = state.currentDay.interventions.find(x => x.id === id); if(i && i.hf_raw) onFinChange(id, i.hf_raw); }
+    function triggerMic(id) { document.getElementById(`txt_${id}`).focus(); }
     function deleteCard(id) { if(state.currentDay.interventions.length > 1) { state.currentDay.interventions = state.currentDay.interventions.filter(x => x.id !== id); document.getElementById('interventions_list').innerHTML = ''; state.currentDay.interventions.forEach(i => renderCard(i.id)); checkTerminer(); saveDraft(); } }
     function checkTerminer() { const ok = state.currentDay.interventions.every(i => i.site && i.hFin); const b = document.getElementById('btn_terminer'); b.disabled = !ok; b.textContent = ok ? "VALIDER LA JOURNÉE" : "SAISIE INCOMPLÈTE"; }
     function terminerJournee() { const idx = state.semaineDays.findIndex(d => d.jourLabel === state.currentDay.jourLabel); if(idx > -1) state.semaineDays[idx] = state.currentDay; else state.semaineDays.push(state.currentDay); state.currentDay = null; saveDraft(); renderWeek(); goTo(3, 4); }
