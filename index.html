@@ -1,540 +1,556 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#002D62">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pointage ADF">
-<link rel="apple-touch-icon" href="https://via.placeholder.com/192/002D62/FFFFFF?text=ADF">
-<link rel="manifest" id="manifest-link">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#002D62">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pointage ADF">
+    
+    <title>ADF — Pointage Expert</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bleu: #002D62;
+            --gris-fond: #f0f3f8;
+            --gris-border: #d8e0ee; 
+            --gris-label: #6b7fa3;
+            --texte: #0d1e3a;
+            --vert: #16a34a; 
+            --rouge: #dc2626;
+            --orange: #f59e0b;
+            --radius: 14px;
+        }
 
-<title>ADF — Pointage Expert</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bleu: #002D62; --gris-fond: #f0f3f8; --gris-border: #d8e0ee; 
-  --gris-label: #6b7fa3; --texte: #0d1e3a; --vert: #16a34a; 
-  --rouge: #dc2626; --orange: #f59e0b; --radius: 14px;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; font-family: 'Barlow', sans-serif; background: #001a38; overflow: hidden; }
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent; 
+        }
 
-#app { 
-  width: 100%; height: 100%; max-width: 700px; margin: 0 auto; 
-  position: relative; background: var(--gris-fond);
-  box-shadow: 0 0 40px rgba(0,0,0,0.3); overflow: hidden; 
-}
+        /* Correction Responsive : On utilise dvh pour la hauteur dynamique */
+        html, body { 
+            height: 100dvh; 
+            width: 100%;
+            font-family: 'Barlow', sans-serif; 
+            background: var(--bleu); /* Pour fondre les bords sur mobile */
+            overflow: hidden; 
+        }
 
-.screen { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--gris-fond); }
-.screen.active { display: flex; animation: fadeIn .22s ease both; }
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        #app { 
+            width: 100%; 
+            height: 100dvh; 
+            max-width: 700px; 
+            margin: 0 auto; 
+            position: relative; 
+            background: var(--gris-fond);
+            box-shadow: 0 0 40px rgba(0,0,0,0.3); 
+            overflow: hidden; 
+        }
 
-.s-header { background:var(--bleu); padding:13px 16px; color: white; flex-shrink:0; z-index: 30; }
-.header-row { display:flex; align-items:center; gap:12px; }
-.btn-back { background: rgba(255,255,255,0.1); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .screen { 
+            position: absolute; 
+            inset: 0; 
+            display: none; 
+            flex-direction: column; 
+            background: var(--gris-fond); 
+        }
+        
+        .screen.active { 
+            display: flex; 
+            animation: fadeIn .22s ease both; 
+        }
+        
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
-.interventions-container { flex:1; overflow-y:auto; padding:12px 12px 140px; display:flex; flex-direction:column; gap:10px; }
-.intervention-card { background:white; border-radius:var(--radius); border:.5px solid var(--gris-border); box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow:hidden; }
-.card-header { background:var(--bleu); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; cursor: pointer; }
-.card-num { font-family:'Barlow Condensed',sans-serif; font-weight:700; color:white; font-size:14px; }
-.card-client-badge { font-size:11px; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing: 0.3px; }
-.card-body { padding:14px; display:flex; flex-direction:column; gap:12px; }
-.card-body.collapsed { display: none; }
+        /* Gestion de la "Safe Area" (encoche iPhone) */
+        .s-header { 
+            background: var(--bleu); 
+            padding: calc(13px + env(safe-area-inset-top)) 16px 13px; 
+            color: white; 
+            flex-shrink: 0; 
+            z-index: 30; 
+        }
 
-.field-label { font-size:10px; font-weight:700; color:var(--gris-label); margin-bottom:4px; display:block; text-transform: uppercase; }
-.field-input { width:100%; padding:11px; border:1.5px solid var(--gris-border); border-radius:8px; font-family:inherit; font-size:16px; outline:none; background:#f8fafd; color: var(--texte); }
+        .header-row { display: flex; align-items: center; gap: 12px; }
+        
+        .btn-back { 
+            background: rgba(255,255,255,0.1); 
+            border: none; 
+            color: white; 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
 
-.field-row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-.responsive-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .interventions-container { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 12px 12px 140px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
 
-.seg-group { display:grid; grid-template-columns: 1fr 1fr; gap:6px; background:#eee; padding:3px; border-radius:10px; }
-.seg-btn { border:none; padding:10px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer; background:none; color:#666; }
-.seg-btn.active.normale { background: var(--bleu); color:white; }
-.seg-btn.active.astreinte { background: var(--orange); color:white; }
-.seg-btn.active.contrat { background: var(--bleu); color:white; }
-.seg-btn.active.hc { background: var(--rouge); color:white; }
+        .intervention-card { 
+            background: white; 
+            border-radius: var(--radius); 
+            border: .5px solid var(--gris-border); 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+        }
 
-.textarea-wrap { position:relative; }
-.textarea-field { width:100%; padding:10px; padding-right:40px; border:1.5px solid var(--gris-border); border-radius:8px; font-family:inherit; font-size:16px; resize:none; min-height:90px; background:#f8fafd; outline:none; }
-.mic-btn { position:absolute; right:8px; bottom:8px; width:32px; height:32px; border-radius:50%; background:var(--bleu); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0.8; }
+        .card-header { 
+            background: var(--bleu); 
+            padding: 10px 14px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            cursor: pointer; 
+        }
 
-.bottom-bar { position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding:12px 16px calc(12px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:12px; border-top:1px solid var(--gris-border); z-index:40; }
-.btn-add { width:54px; height:54px; border-radius:50%; background:white; border:2px solid var(--bleu); color:var(--bleu); font-size:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.btn-primary { flex:1; padding:16px; background:var(--bleu); color:white; border:none; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; cursor:pointer; font-size:17px; transition: background 0.3s ease; }
-.btn-primary:disabled { background:#c0cce0; cursor: not-allowed; }
+        .card-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: white; font-size: 14px; }
+        .card-client-badge { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
+        
+        .card-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+        .card-body.collapsed { display: none; }
 
-.btn-compact { background: white; color: var(--bleu); border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; padding: 10px 25px; cursor: pointer; width: auto; min-width: 150px; }
-.btn-compact:active { transform: scale(0.95); }
+        .field-label { font-size: 10px; font-weight: 700; color: var(--gris-label); margin-bottom: 4px; display: block; text-transform: uppercase; }
+        .field-input { width: 100%; padding: 11px; border: 1.5px solid var(--gris-border); border-radius: 8px; font-family: inherit; font-size: 16px; outline: none; background: #f8fafd; color: var(--texte); }
 
-.alert-tag { font-size:10px; font-weight:700; padding:4px 8px; border-radius:6px; display:inline-block; margin-top:5px; margin-right:5px; }
-.j1 { background:#fef3c7; color:#92400e; }
-.arrondi { background:#eff6ff; color:#1d4ed8; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .responsive-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 
-.success-content { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 30px; }
-.success-icon { width: 80px; height: 80px; background: var(--vert); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .seg-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #eee; padding: 3px; border-radius: 10px; }
+        .seg-btn { border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; background: none; color: #666; }
+        .seg-btn.active.normale { background: var(--bleu); color: white; }
+        .seg-btn.active.astreinte { background: var(--orange); color: white; }
+        .seg-btn.active.contrat { background: var(--bleu); color: white; }
+        .seg-btn.active.hc { background: var(--rouge); color: white; }
 
-@media (min-width: 500px) {
-    .responsive-grid { grid-template-columns: 1fr 1fr; }
-}
+        .textarea-field { width: 100%; padding: 10px; border: 1.5px solid var(--gris-border); border-radius: 8px; font-family: inherit; font-size: 16px; resize: none; min-height: 90px; background: #f8fafd; outline: none; }
 
-/* Petit badge pour indiquer le mode brouillon */
-.draft-badge { font-size: 11px; background: var(--orange); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 700; margin-left: 10px; display: none; }
-</style>
+        /* Barre du bas adaptée aux Safe Areas */
+        .bottom-bar { 
+            position: absolute; 
+            bottom: 0; left: 0; right: 0; 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(10px); 
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            border-top: 1px solid var(--gris-border); 
+            z-index: 40; 
+        }
+
+        .btn-add { width: 54px; height: 54px; border-radius: 50%; background: white; border: 2px solid var(--bleu); color: var(--bleu); font-size: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        
+        .btn-primary { 
+            flex: 1; 
+            padding: 16px; 
+            background: var(--bleu); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-family: 'Barlow Condensed', sans-serif; 
+            font-weight: 700; 
+            font-size: 17px; 
+        }
+        
+        .btn-primary:disabled { background: #c0cce0; }
+
+        .btn-compact { background: white; color: var(--bleu); border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; padding: 10px 25px; cursor: pointer; min-width: 150px; }
+
+        .alert-tag { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; margin-right: 5px; }
+        .j1 { background: #fef3c7; color: #92400e; }
+        .arrondi { background: #eff6ff; color: #1d4ed8; }
+
+        .success-content { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 30px; }
+        .success-icon { width: 80px; height: 80px; background: var(--vert); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+
+        .draft-badge { font-size: 11px; background: var(--orange); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 700; margin-left: 10px; display: none; }
+
+        @media (min-width: 500px) {
+            .responsive-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* --- APPARITION DU CURSEUR (SCROLLBAR) --- */
+        .interventions-container, .week-body, #screen2 > div {
+            -webkit-overflow-scrolling: touch; /* Rend le glissement très fluide sur iPhone */
+        }
+        ::-webkit-scrollbar {
+            width: 8px; /* Largeur du curseur */
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 45, 98, 0.3); /* Couleur bleu ADF semi-transparente */
+            border-radius: 10px; /* Bords arrondis */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 45, 98, 0.6); /* Devient plus foncé si on clique dessus */
+        }
+    </style>
 </head>
 <body>
+
 <div id="app">
 
-  <div class="screen active" id="screen1" style="background:var(--bleu); justify-content:center; align-items:center; color:white; text-align:center;">
-    <h1 style="font-size:55px; font-family:'Barlow Condensed'">GROUPE ADF</h1>
-    <p style="letter-spacing:3px; opacity:0.7; margin-bottom:20px">POINTAGE HEBDOMADAIRE</p>
-    <button class="btn-compact" id="btn_start" onclick="goTo(1,2)">COMMENCER</button>
-  </div>
-
-  <div class="screen" id="screen2">
-    <div class="s-header"><div class="header-row"><button class="btn-back" onclick="goTo(2,1)">←</button><span>CONFIGURATION</span><span id="draft_indicator" class="draft-badge">BROUILLON</span></div></div>
-    <div style="padding:20px; display:flex; flex-direction:column; gap:15px; overflow-y: auto;">
-      <div class="intervention-card" style="padding:20px">
-        <label class="field-label">Technicien</label>
-        <select class="field-input" id="sel_tech">
-            <option value="">Sélectionner...</option>
-            <option>ERIC</option><option>GAEL</option><option>GUILLO</option><option>JONATHAN</option><option>JULIEN</option><option>KEVIN</option><option>LEONZ</option><option>SERAPHIN</option><option>STEPHANE</option><option>STEVEN</option><option>YOANN</option>
-        </select>
-      </div>
-      <div class="intervention-card" style="padding:20px">
-        <label class="field-label">Lundi de la semaine</label>
-        <input type="date" class="field-input" id="sel_semaine">
-      </div>
-      <button class="btn-primary" id="btn_config_ok" onclick="goToRecap()" disabled>VOIR MA SEMAINE</button>
-      <button onclick="resetApp(true)" style="background:none; border:none; color:var(--rouge); font-weight:700; margin-top:10px; cursor:pointer;">EFFACER LE BROUILLON ET RECOMMENCER</button>
+    <div class="screen active" id="screen1" style="background:var(--bleu); justify-content:center; align-items:center; color:white; text-align:center;">
+        <h1 style="font-size:55px; font-family:'Barlow Condensed'">GROUPE ADF</h1>
+        <p style="letter-spacing:3px; opacity:0.7; margin-bottom:20px">POINTAGE HEBDOMADAIRE</p>
+        <button class="btn-compact" id="btn_start" onclick="goTo(1,2)">COMMENCER</button>
     </div>
-  </div>
 
-  <div class="screen" id="screen3">
-    <div class="s-header"><div class="header-row"><button class="btn-back" onclick="goTo(3,4)">←</button><div style="flex:1"><div id="prod_title" style="font-weight:700; text-transform:uppercase"></div><div id="prod_meta" style="font-size:10px; opacity:0.6"></div></div></div></div>
-    <div class="interventions-container" id="interventions_list"></div>
-    <div class="bottom-bar">
-      <button class="btn-add" onclick="addIntervention()">+</button>
-      <button class="btn-primary" id="btn_terminer" onclick="terminerJournee()" disabled>SAISIE INCOMPLÈTE</button>
+    <div class="screen" id="screen2">
+        <div class="s-header">
+            <div class="header-row">
+                <button class="btn-back" onclick="goTo(2,1)">←</button>
+                <span>CONFIGURATION</span>
+                <span id="draft_indicator" class="draft-badge">BROUILLON</span>
+            </div>
+        </div>
+        <div style="padding:20px; display:flex; flex-direction:column; gap:15px; overflow-y: auto;">
+            <div class="intervention-card" style="padding:20px">
+                <label class="field-label">Technicien</label>
+                <select class="field-input" id="sel_tech">
+                    <option value="">Sélectionner...</option>
+                    <option>ERIC</option><option>GAEL</option><option>GUILLO</option><option>JONATHAN</option><option>JULIEN</option><option>KEVIN</option><option>LEONZ</option><option>SERAPHIN</option><option>STEPHANE</option><option>STEVEN</option><option>YOANN</option>
+                </select>
+            </div>
+            <div class="intervention-card" style="padding:20px">
+                <label class="field-label">Lundi de la semaine</label>
+                <input type="date" class="field-input" id="sel_semaine">
+            </div>
+            <button class="btn-primary" id="btn_config_ok" onclick="goToRecap()" disabled>VOIR MA SEMAINE</button>
+            <button onclick="resetApp(true)" style="background:none; border:none; color:var(--rouge); font-weight:700; margin-top:15px; cursor:pointer; font-size:13px;">✕ EFFACER LE BROUILLON ET RECOMMENCER</button>
+        </div>
     </div>
-  </div>
 
-  <div class="screen" id="screen4">
-    <div class="s-header"><div class="header-row"><button class="btn-back" onclick="goTo(4,2)">←</button><div style="flex:1"><div style="font-weight:700">RÉCAPITULATIF SEMAINE</div><div id="week_header_meta" style="font-size:10px; opacity:0.6"></div></div></div></div>
-    <div class="week-body" id="week_body" style="padding:20px; overflow-y:auto; flex:1; display: flex; flex-direction: column; gap:12px;"></div>
-    <div style="padding:15px; background:white; border-top: 1px solid var(--gris-border);"><button class="btn-primary" id="btn_envoyer" onclick="envoyerSemaine()" disabled style="background:var(--vert)">ENVOYER AU BUREAU</button></div>
-  </div>
-
-  <div class="screen" id="screen5">
-    <div class="success-content">
-      <div class="success-icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      </div>
-      <h2 style="font-family:'Barlow Condensed'; font-size: 28px; margin-bottom: 10px; color: var(--bleu)">ENVOI RÉUSSI !</h2>
-      <p style="color: var(--gris-label); margin-bottom: 30px;">Ton pointage a bien été envoyé et ton brouillon a été vidé.</p>
-      <button class="btn-compact" style="background: var(--bleu); color: white; min-width: 200px;" onclick="resetApp(false)">RETOURNER AU MENU</button>
+    <div class="screen" id="screen3">
+        <div class="s-header">
+            <div class="header-row">
+                <button class="btn-back" onclick="goTo(3,4)">←</button>
+                <div style="flex:1">
+                    <div id="prod_title" style="font-weight:700; text-transform:uppercase"></div>
+                    <div id="prod_meta" style="font-size:10px; opacity:0.6"></div>
+                </div>
+            </div>
+        </div>
+        <div class="interventions-container" id="interventions_list"></div>
+        <div class="bottom-bar">
+            <button class="btn-add" onclick="addIntervention()">+</button>
+            <button class="btn-primary" id="btn_terminer" onclick="terminerJournee()" disabled>SAISIE INCOMPLÈTE</button>
+        </div>
     </div>
-  </div>
+
+    <div class="screen" id="screen4">
+        <div class="s-header">
+            <div class="header-row">
+                <button class="btn-back" onclick="goTo(4,2)">←</button>
+                <div style="flex:1">
+                    <div style="font-weight:700">RÉCAPITULATIF SEMAINE</div>
+                    <div id="week_header_meta" style="font-size:10px; opacity:0.6"></div>
+                </div>
+            </div>
+        </div>
+        <div class="week-body" id="week_body" style="padding:20px; overflow-y:auto; flex:1; display: flex; flex-direction: column; gap:12px;"></div>
+        <div style="padding:15px; background:white; border-top: 1px solid var(--gris-border); padding-bottom: calc(15px + env(safe-area-inset-bottom));">
+            <button class="btn-primary" id="btn_envoyer" onclick="envoyerSemaine()" disabled style="background:var(--vert); width:100%">ENVOYER AU BUREAU</button>
+        </div>
+    </div>
+
+    <div class="screen" id="screen5">
+        <div class="success-content">
+            <div class="success-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h2 style="font-family:'Barlow Condensed'; font-size: 28px; margin-bottom: 10px; color: var(--bleu)">ENVOI RÉUSSI !</h2>
+            <p style="color: var(--gris-label); margin-bottom: 30px;">Ton pointage a bien été envoyé.</p>
+            <button class="btn-compact" style="background: var(--bleu); color: white; min-width: 200px;" onclick="resetApp(false)">RETOURNER AU MENU</button>
+        </div>
+    </div>
 
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzURcbyr1eKH04vMp7f8AmjuobUIcytoVBmNyEqKD_9t43Ie3rN_tMZwOPZRkUOmUs/exec'; 
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzURcbyr1eKH04vMp7f8AmjuobUIcytoVBmNyEqKD_9t43Ie3rN_tMZwOPZRkUOmUs/exec'; 
 
-const SITES_DATA = [
-  { site: 'AGENCE ADF', client: 'ADF' }, { site: 'AUBERVILLIER EXT.', client: 'TOTAL' }, { site: 'AUBERVILLIER INT.', client: 'TOTAL' },
-  { site: 'Brie', client: 'KEOLIS' }, { site: 'Cesson', client: 'TRANSDEV' }, { site: 'Chelles', client: 'KEOLIS' },
-  { site: 'Combs-la-Ville', client: 'TRANSDEV' }, { site: 'COMPIEGNE', client: 'TOTAL' }, { site: 'Conflans', client: 'SAVAC' },
-  { site: 'Coulommiers', client: 'TRANSDEV' }, { site: 'Créteil', client: 'RATP' }, { site: 'Domont', client: 'TRANSDEV' },
-  { site: 'Ecquevilly', client: 'KEOLIS' }, { site: 'GENNEVILLIERS', client: 'TOTAL' }, { site: 'Houdan', client: 'TRANSDEV' },
-  { site: 'Lagny', client: 'TRANSDEV' }, { site: 'Limeil', client: 'TRANSDEV' }, { site: 'Lizy', client: 'TRANSDEV' },
-  { site: 'MARECHAL LECLERC', client: 'TOTAL' }, { site: 'Montereau', client: 'SAVAC' }, { site: 'Montlhéry', client: 'TRANSDEV' },
-  { site: 'Plaisir', client: 'TRANSDEV' }, { site: 'Poincy', client: 'TRANSDEV' }, { site: 'Rambouillet', client: 'TRANSDEV' },
-  { site: 'REAU GALANDE', client: 'TOTAL' }, { site: 'Rosny', client: 'SAVAC' }, { site: 'St-Arnoult', client: 'TRANSDEV' },
-  { site: 'St-Fargeau', client: 'TRANSDEV' }, { site: 'St-Geneviève', client: 'TRANSDEV' }, { site: 'Total', client: 'TOTAL' },
-  { site: 'Tremblay', client: 'TRANSDEV' }, { site: 'Vaux-le-pénil', client: 'TRANSDEV' }, { site: 'Villepinte', client: 'TRANSDEV' },
-  { site: 'Vulaines', client: 'TRANSDEV' }
-].sort((a, b) => a.site.localeCompare(b.site));
+    const SITES_DATA = [
+        { site: 'AGENCE ADF', client: 'ADF' }, { site: 'AUBERVILLIER EXT.', client: 'TOTAL' }, { site: 'AUBERVILLIER INT.', client: 'TOTAL' },
+        { site: 'Brie', client: 'KEOLIS' }, { site: 'Cesson', client: 'TRANSDEV' }, { site: 'Chelles', client: 'KEOLIS' },
+        { site: 'Combs-la-Ville', client: 'TRANSDEV' }, { site: 'COMPIEGNE', client: 'TOTAL' }, { site: 'Conflans', client: 'SAVAC' },
+        { site: 'Coulommiers', client: 'TRANSDEV' }, { site: 'Créteil', client: 'RATP' }, { site: 'Domont', client: 'TRANSDEV' },
+        { site: 'Ecquevilly', client: 'KEOLIS' }, { site: 'GENNEVILLIERS', client: 'TOTAL' }, { site: 'Houdan', client: 'TRANSDEV' },
+        { site: 'Lagny', client: 'TRANSDEV' }, { site: 'Limeil', client: 'TRANSDEV' }, { site: 'Lizy', client: 'TRANSDEV' },
+        { site: 'MARECHAL LECLERC', client: 'TOTAL' }, { site: 'Montereau', client: 'SAVAC' }, { site: 'Montlhéry', client: 'TRANSDEV' },
+        { site: 'Plaisir', client: 'TRANSDEV' }, { site: 'Poincy', client: 'TRANSDEV' }, { site: 'Rambouillet', client: 'TRANSDEV' },
+        { site: 'REAU GALANDE', client: 'TOTAL' }, { site: 'Rosny', client: 'SAVAC' }, { site: 'St-Arnoult', client: 'TRANSDEV' },
+        { site: 'St-Fargeau', client: 'TRANSDEV' }, { site: 'St-Geneviève', client: 'TRANSDEV' }, { site: 'Total', client: 'TOTAL' },
+        { site: 'Tremblay', client: 'TRANSDEV' }, { site: 'Vaux-le-pénil', client: 'TRANSDEV' }, { site: 'Villepinte', client: 'TRANSDEV' },
+        { site: 'Vulaines', client: 'TRANSDEV' }
+    ].sort((a, b) => a.site.localeCompare(b.site));
 
-const LISTE_TECHS = ['ERIC','GAEL','GUILLO','JONATHAN','JULIEN','KEVIN','LEONZ','SERAPHIN','STEPHANE','STEVEN','YOANN'];
-const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+    const LISTE_TECHS = ['ERIC','GAEL','GUILLO','JONATHAN','JULIEN','KEVIN','LEONZ','SERAPHIN','STEPHANE','STEVEN','YOANN'];
+    const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
-let state = { tech: '', semaine: '', semaineDays: [], currentDay: null };
+    let state = { tech: '', semaine: '', semaineDays: [], currentDay: null };
 
-// --- GÉNÉRATION DYNAMIQUE DE LA PWA (MANIFEST) ---
-const manifestJSON = {
-    "name": "Pointage ADF Expert",
-    "short_name": "Pointage ADF",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#001a38",
-    "theme_color": "#002D62",
-    "icons": [{"src": "https://via.placeholder.com/512/002D62/FFFFFF?text=ADF", "sizes": "512x512", "type": "image/png"}]
-};
-const blob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
-document.querySelector('#manifest-link').setAttribute('href', URL.createObjectURL(blob));
-// --------------------------------------------------
-
-function escapeHTML(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>'"]/g, match => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-    }[match]));
-}
-
-// Fonction pour trouver la date du Lundi de la semaine en cours
-function getMondayOfCurrentWeek() {
-    const d = new Date();
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(d.setDate(diff));
-    const yyyy = monday.getFullYear();
-    const mm = String(monday.getMonth() + 1).padStart(2, '0');
-    const dd = String(monday.getDate()).padStart(2, '0');
-    return { raw: `${yyyy}-${mm}-${dd}`, formatted: `${dd}/${mm}/${yyyy}` };
-}
-
-// Fonction de Sauvegarde Automatique
-function saveDraft() {
-    localStorage.setItem('adf_draft', JSON.stringify(state));
-    if(state.semaineDays.length > 0 || (state.currentDay && state.currentDay.interventions.length > 0)) {
-        document.getElementById('draft_indicator').style.display = 'inline-block';
-    } else {
-        document.getElementById('draft_indicator').style.display = 'none';
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match]));
     }
-}
 
-window.addEventListener('DOMContentLoaded', () => {
-    const selTech = document.getElementById('sel_tech');
-    const selSemaine = document.getElementById('sel_semaine');
-    
-    // 1. On charge la mémoire du téléphone (Brouillon + Nom)
-    const savedTech = localStorage.getItem('savedTech');
-    const draft = localStorage.getItem('adf_draft');
-    
-    if (draft) {
-        try {
-            const parsedDraft = JSON.parse(draft);
-            if(parsedDraft.semaineDays || parsedDraft.currentDay) {
-                state = parsedDraft;
-                // On met à jour l'interface avec les données du brouillon
+    function getMondayOfCurrentWeek() {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(d.setDate(diff));
+        const yyyy = monday.getFullYear();
+        const mm = String(monday.getMonth() + 1).padStart(2, '0');
+        const dd = String(monday.getDate()).padStart(2, '0');
+        return { raw: `${yyyy}-${mm}-${dd}`, formatted: `${dd}/${mm}/${yyyy}` };
+    }
+
+    function saveDraft() {
+        localStorage.setItem('adf_draft', JSON.stringify(state));
+        const hasContent = state.semaineDays.length > 0 || (state.currentDay && state.currentDay.interventions.length > 0);
+        document.getElementById('draft_indicator').style.display = hasContent ? 'inline-block' : 'none';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const selTech = document.getElementById('sel_tech');
+        const selSemaine = document.getElementById('sel_semaine');
+        const savedTech = localStorage.getItem('savedTech');
+        const draft = localStorage.getItem('adf_draft');
+        
+        if (draft) {
+            try {
+                const parsed = JSON.parse(draft);
+                state = parsed;
                 selTech.value = state.tech;
                 if(state.semaine) {
                     const [d, m, y] = state.semaine.split('/');
                     selSemaine.value = `${y}-${m}-${d}`;
                 }
-                document.getElementById('draft_indicator').style.display = 'inline-block';
                 document.getElementById('btn_start').textContent = "REPRENDRE LE BROUILLON";
-            }
-        } catch(e) {}
-    } else {
-        // Pas de brouillon ? On utilise le nom sauvegardé et on met le lundi auto
-        if (savedTech) {
-            selTech.value = savedTech;
-            state.tech = savedTech;
+                document.getElementById('draft_indicator').style.display = 'inline-block';
+            } catch(e) {}
+        } else {
+            if (savedTech) { selTech.value = savedTech; state.tech = savedTech; }
+            const monday = getMondayOfCurrentWeek();
+            selSemaine.value = monday.raw; state.semaine = monday.formatted;
         }
-        const monday = getMondayOfCurrentWeek();
-        selSemaine.value = monday.raw;
-        state.semaine = monday.formatted;
-    }
-    
-    document.getElementById('btn_config_ok').disabled = !state.tech;
-
-    // 2. Les événements de changement
-    selTech.addEventListener('change', e => {
-        state.tech = e.target.value;
         document.getElementById('btn_config_ok').disabled = !state.tech;
-        if(state.tech) localStorage.setItem('savedTech', state.tech);
-        saveDraft();
-    });
 
-    selSemaine.addEventListener('change', e => {
-        if(e.target.value) {
-            const [y,m,d] = e.target.value.split('-');
-            state.semaine = `${d}/${m}/${y}`;
+        selTech.addEventListener('change', e => {
+            state.tech = e.target.value;
+            document.getElementById('btn_config_ok').disabled = !state.tech;
+            if(state.tech) localStorage.setItem('savedTech', state.tech);
             saveDraft();
-        }
-    });
-});
+        });
 
-function resetApp(forceDeleteDraft = false) {
-    if (forceDeleteDraft) {
-        if(!confirm("Êtes-vous sûr de vouloir supprimer votre saisie en cours ?")) return;
+        selSemaine.addEventListener('change', e => {
+            if(e.target.value) {
+                const [y,m,d] = e.target.value.split('-');
+                state.semaine = `${d}/${m}/${y}`;
+                saveDraft();
+            }
+        });
+    });
+
+    function resetApp(force) {
+        if (force && !confirm("Supprimer la saisie en cours ?")) return;
         localStorage.removeItem('adf_draft');
+        state = { tech: localStorage.getItem('savedTech') || '', semaine: '', semaineDays: [], currentDay: null };
+        const mon = getMondayOfCurrentWeek();
+        document.getElementById('sel_semaine').value = mon.raw; state.semaine = mon.formatted;
+        document.getElementById('sel_tech').value = state.tech;
+        document.getElementById('btn_config_ok').disabled = !state.tech;
+        document.getElementById('interventions_list').innerHTML = '';
+        document.getElementById('week_body').innerHTML = '';
+        document.getElementById('draft_indicator').style.display = 'none';
+        document.getElementById('btn_start').textContent = "COMMENCER";
+        goTo(5, 1);
     }
-    
-    state = { tech: localStorage.getItem('savedTech') || '', semaine: '', semaineDays: [], currentDay: null };
-    document.getElementById('sel_tech').value = state.tech;
-    
-    const monday = getMondayOfCurrentWeek();
-    document.getElementById('sel_semaine').value = monday.raw;
-    state.semaine = monday.formatted;
-    
-    document.getElementById('btn_config_ok').disabled = !state.tech;
-    document.getElementById('interventions_list').innerHTML = '';
-    document.getElementById('week_body').innerHTML = '';
-    document.getElementById('draft_indicator').style.display = 'none';
-    document.getElementById('btn_start').textContent = "COMMENCER";
-    
-    goTo(5, 1);
-}
 
-function getISOWeekNumber(dateStr) {
-    if(!dateStr) return '';
-    const [d, m, y] = dateStr.split('/').map(Number);
-    const date = new Date(y, m - 1, d);
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    const week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-}
-
-function goTo(f, t) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen' + t).classList.add('active');
-}
-
-function goToRecap() { 
-    const numSem = getISOWeekNumber(state.semaine);
-    document.getElementById('week_header_meta').textContent = state.tech + ' — SEMAINE ' + numSem + ' — ' + state.semaine;
-    renderWeek(); 
-    goTo(2, 4); 
-}
-
-function renderWeek() {
-    const body = document.getElementById('week_body');
-    body.innerHTML = '';
-    state.semaineDays.forEach((day, idx) => {
-        const card = document.createElement('div');
-        card.style.cssText = "background:white; padding:18px; border-radius:12px; border:1px solid #d8e0ee; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.03)";
-        card.innerHTML = `<div><strong>${escapeHTML(day.jourLabel)}</strong><br><small style="color:var(--gris-label)">${day.interventions.length} site(s)</small></div>
-                          <button onclick="modifierJournee(${idx})" style="color:var(--bleu); border:1px solid; padding:8px 16px; border-radius:8px; background:none; font-weight:700; cursor:pointer">MODIFIER</button>`;
-        body.appendChild(card);
-    });
-    if(state.semaineDays.length < 5) {
-        const btn = document.createElement('button');
-        btn.className = "btn-primary"; btn.style.cssText = "background:none; border:2px dashed #ccc; color:#888; margin-top:10px;";
-        btn.textContent = "+ AJOUTER LE " + JOURS[state.semaineDays.length].toUpperCase();
-        btn.onclick = () => ouvrirJournee(state.semaineDays.length);
-        body.appendChild(btn);
+    function goTo(f, t) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen' + t).classList.add('active');
     }
-    document.getElementById('btn_envoyer').disabled = state.semaineDays.length === 0;
-}
 
-function ouvrirJournee(idx) {
-    state.currentDay = { jourLabel: JOURS[idx], interventions: [] };
-    document.getElementById('prod_title').textContent = JOURS[idx];
-    document.getElementById('prod_meta').textContent = state.tech;
-    document.getElementById('interventions_list').innerHTML = '';
-    addIntervention(); 
-    goTo(4, 3);
-}
-
-function modifierJournee(idx) {
-    state.currentDay = JSON.parse(JSON.stringify(state.semaineDays[idx]));
-    document.getElementById('prod_title').textContent = state.currentDay.jourLabel;
-    const list = document.getElementById('interventions_list');
-    list.innerHTML = '';
-    state.currentDay.interventions.forEach(inv => renderCard(inv.id));
-    checkTerminer();
-    goTo(4, 3);
-}
-
-function addIntervention() {
-    document.querySelectorAll('.card-body').forEach(b => b.classList.add('collapsed'));
-    const uniqueId = Date.now(); 
-    const newInv = { id: uniqueId, mission:'Normale', site:'', client:'', contrat:'CONTRAT', hDebut:'', hFin:'', hf_raw:'', desc:'', hAppel:'', hArrivee:'', j1:false, arrondi:false, binome:'' };
-    state.currentDay.interventions.push(newInv);
-    renderCard(newInv.id);
-    saveDraft();
-}
-
-function renderCard(id) {
-    const list = document.getElementById('interventions_list');
-    const inv = state.currentDay.interventions.find(i => i.id === id);
-    const isAst = inv.mission === 'Astreinte';
-    const isHC = inv.contrat === 'HORS CONTRAT';
-    
-    const displayNum = state.currentDay.interventions.findIndex(i => i.id === id) + 1;
-
-    const card = document.createElement('div');
-    card.className = 'intervention-card'; card.id = `card_${id}`;
-    card.innerHTML = `
-        <div class="card-header" onclick="toggleAccordion(${id})">
-            <div><div class="card-num">INTERVENTION N°${displayNum}</div><div class="card-client-badge" id="cl_head_${id}">${escapeHTML(inv.client) || 'Site...'}</div></div>
-            <span style="color:white; font-size:12px">▼</span>
-        </div>
-        <div class="card-body" id="body_${id}">
-            <div class="seg-group">
-                <button class="seg-btn normale ${!isAst?'active':''}" onclick="updateMode(${id},'mission','Normale')">NORMALE</button>
-                <button class="seg-btn astreinte ${isAst?'active':''}" onclick="updateMode(${id},'mission','Astreinte')">ASTREINTE</button>
-            </div>
-            <div class="responsive-grid">
-                <div class="field-wrap"><label class="field-label">Accompagné par</label>
-                    <select class="field-input" onchange="updateInv(${id}, 'binome', this.value)">
-                        <option value="">Seul</option>
-                        ${LISTE_TECHS.map(t => `<option value="${t}" ${inv.binome === t ? 'selected':''}>${t}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="field-wrap"><label class="field-label">Site</label>
-                    <select class="field-input" onchange="onSiteChange(${id}, this)">
-                        <option value="">Sélectionner...</option>
-                        ${SITES_DATA.map(s => `<option value="${s.site}" data-client="${s.client}" ${inv.site === s.site ? 'selected':''}>${s.site}</option>`).join('')}
-                    </select>
-                </div>
-            </div>
-            <div class="seg-group">
-                <button class="seg-btn contrat ${!isHC?'active':''}" onclick="updateMode(${id},'contrat','CONTRAT')">CONTRAT</button>
-                <button class="seg-btn hc ${isHC?'active':''}" onclick="updateMode(${id},'contrat','HORS CONTRAT')">HORS CONTRAT</button>
-            </div>
-            ${isAst ? `
-            <div class="field-row">
-                <div><label class="field-label">H. Appel</label><input type="time" class="field-input" value="${escapeHTML(inv.hAppel) || ''}" onchange="updateTime(${id},'hAppel',this.value)"></div>
-                <div><label class="field-label">H. Arrivée</label><input type="time" class="field-input" value="${escapeHTML(inv.hArrivee) || ''}" onchange="updateInv(${id},'hArrivee',this.value)"></div>
-            </div>` : `
-            <div class="field-wrap"><label class="field-label">Heure Début</label><input type="time" class="field-input" value="${escapeHTML(inv.hDebut) || ''}" onchange="updateTime(${id},'hDebut',this.value)"></div>
-            `}
-            <div class="field-wrap"><label class="field-label">Heure Fin (arrondi ¼h)</label><input type="time" class="field-input" id="f_input_${id}" value="${escapeHTML(inv.hf_raw) || ''}" onchange="onFinChange(${id},this.value)"></div>
-            <div id="st_${id}">${inv.j1?'<span class="alert-tag j1">⚠ FIN J+1</span>':''}${inv.arrondi?`<span class="alert-tag arrondi">⏱ ARRONDI À ${inv.hFin}</span>`:''}</div>
-            <div class="field-wrap"><label class="field-label">Description</label>
-                <div class="textarea-wrap">
-                    <textarea class="textarea-field" id="txt_${id}" oninput="updateInv(${id},'desc',this.value)" placeholder="Détaillez vos travaux...">${escapeHTML(inv.desc)}</textarea>
-                    <button class="mic-btn" onclick="triggerMic(${id})"><svg width="14" height="14" viewBox="0 0 12 12" fill="none"><rect x="4" y="0" width="4" height="7" rx="2" fill="white"/><path d="M2 6c0 2.2 1.8 4 4 4s4-1.8 4-4" stroke="white" stroke-width="1.2" fill="none"/></svg></button>
-                </div>
-            </div>
-            <button onclick="deleteCard(${id})" style="background:none; border:none; color:var(--rouge); font-size:11px; font-weight:700; cursor:pointer; text-align: left;">✕ SUPPRIMER L'INTERVENTION</button>
-        </div>
-    `;
-    list.appendChild(card); 
-    checkTerminer();
-}
-
-function updateMode(id, field, value) {
-    const inv = state.currentDay.interventions.find(i => i.id === id);
-    inv[field] = value;
-    if(field === 'mission') { inv.hDebut = ''; inv.hAppel = ''; inv.hArrivee = ''; inv.hf_raw = ''; inv.hFin = ''; inv.j1 = false; inv.arrondi = false; }
-    const list = document.getElementById('interventions_list');
-    list.innerHTML = '';
-    state.currentDay.interventions.forEach(i => renderCard(i.id));
-    saveDraft();
-}
-
-function onSiteChange(id, sel) {
-    const inv = state.currentDay.interventions.find(i => i.id === id);
-    const selectedOption = sel.options[sel.selectedIndex];
-    inv.site = sel.value;
-    inv.client = selectedOption.getAttribute('data-client') || '';
-    const headClient = document.getElementById(`cl_head_${id}`);
-    if(headClient) headClient.textContent = inv.client || 'Site...';
-    checkTerminer();
-    saveDraft();
-}
-
-function onFinChange(id, val) {
-    const inv = state.currentDay.interventions.find(i => i.id === id);
-    inv.hf_raw = val; 
-    
-    if(!val) {
-        inv.hFin = '';
-        inv.arrondi = false;
-        inv.j1 = false;
-        document.getElementById(`st_${id}`).innerHTML = '';
-        checkTerminer();
-        saveDraft();
-        return;
+    function goToRecap() { 
+        renderWeek(); 
+        const date = state.semaine.split('/').reverse().join('-');
+        const d = new Date(date); d.setHours(0,0,0,0);
+        d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+        const w1 = new Date(d.getFullYear(), 0, 4);
+        const numSem = 1 + Math.round(((d.getTime() - w1.getTime()) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+        document.getElementById('week_header_meta').textContent = state.tech + ' — SEMAINE ' + numSem + ' — ' + state.semaine;
+        goTo(2, 4); 
     }
-    
-    const [h, m] = val.split(':').map(Number); 
-    const total = h * 60 + m;
-    const reste = total % 15;
-    if(reste !== 0) {
-        const rounded = total + (15 - reste);
-        inv.hFin = String(Math.floor(rounded/60)%24).padStart(2,'0')+':'+String(rounded%60).padStart(2,'0');
-        inv.arrondi = true;
-    } else { 
-        inv.hFin = val; 
-        inv.arrondi = false; 
+
+    function renderWeek() {
+        const body = document.getElementById('week_body');
+        body.innerHTML = '';
+        state.semaineDays.forEach((day, idx) => {
+            const card = document.createElement('div');
+            card.style.cssText = "background:white; padding:18px; border-radius:12px; border:1px solid #d8e0ee; display:flex; justify-content:space-between; align-items:center;";
+            card.innerHTML = `<div><strong>${day.jourLabel}</strong><br><small style="color:var(--gris-label)">${day.interventions.length} site(s)</small></div>
+                              <button onclick="modifierJournee(${idx})" style="color:var(--bleu); border:1px solid; padding:8px 16px; border-radius:8px; background:none; font-weight:700;">MODIFIER</button>`;
+            body.appendChild(card);
+        });
+        if(state.semaineDays.length < 5) {
+            const btn = document.createElement('button');
+            btn.className = "btn-primary"; btn.style.cssText = "background:none; border:2px dashed #ccc; color:#888; margin-top:10px;";
+            btn.textContent = "+ AJOUTER LE " + JOURS[state.semaineDays.length].toUpperCase();
+            btn.onclick = () => ouvrirJournee(state.semaineDays.length);
+            body.appendChild(btn);
+        }
+        document.getElementById('btn_envoyer').disabled = state.semaineDays.length === 0;
     }
-    const debutRef = inv.mission === 'Astreinte' ? inv.hAppel : inv.hDebut;
-    if(debutRef && inv.hFin) {
-        const [h1, m1] = debutRef.split(':').map(Number); const [h2, m2] = inv.hFin.split(':').map(Number);
-        inv.j1 = (h2*60+m2) < (h1*60+m1);
+
+    function ouvrirJournee(idx) {
+        state.currentDay = { jourLabel: JOURS[idx], interventions: [] };
+        document.getElementById('prod_title').textContent = JOURS[idx];
+        document.getElementById('prod_meta').textContent = state.tech;
+        document.getElementById('interventions_list').innerHTML = '';
+        addIntervention(); goTo(4, 3);
     }
-    const st = document.getElementById(`st_${id}`);
-    st.innerHTML = (inv.j1?'<span class="alert-tag j1">⚠ FIN J+1</span> ':'') + (inv.arrondi?`<span class="alert-tag arrondi">⏱ ARRONDI À ${inv.hFin}</span>`:'');
-    checkTerminer();
-    saveDraft();
-}
 
-function toggleAccordion(id) {
-    document.querySelectorAll('.card-body').forEach(b => { if(b.id !== `body_${id}`) b.classList.add('collapsed'); });
-    document.getElementById(`body_${id}`).classList.toggle('collapsed');
-}
-
-function updateInv(id, f, v) { 
-    const inv = state.currentDay.interventions.find(i => i.id === id);
-    if(inv) inv[f] = v; 
-    checkTerminer(); 
-    saveDraft();
-}
-
-function updateTime(id, f, v) { 
-    updateInv(id, f, v); 
-    const inv = state.currentDay.interventions.find(i => i.id === id);
-    if(inv && inv.hf_raw) onFinChange(id, inv.hf_raw); 
-}
-
-function triggerMic(id) { document.getElementById(`txt_${id}`).focus(); }
-
-function deleteCard(id) {
-    if(state.currentDay.interventions.length > 1) {
-        state.currentDay.interventions = state.currentDay.interventions.filter(i => i.id !== id);
+    function modifierJournee(idx) {
+        state.currentDay = JSON.parse(JSON.stringify(state.semaineDays[idx]));
+        document.getElementById('prod_title').textContent = state.currentDay.jourLabel;
         const list = document.getElementById('interventions_list');
         list.innerHTML = '';
         state.currentDay.interventions.forEach(inv => renderCard(inv.id));
-        checkTerminer();
+        checkTerminer(); goTo(4, 3);
+    }
+
+    function addIntervention() {
+        document.querySelectorAll('.card-body').forEach(b => b.classList.add('collapsed'));
+        const id = Date.now();
+        const newInv = { id, mission:'Normale', site:'', client:'', contrat:'CONTRAT', hDebut:'', hFin:'', hf_raw:'', desc:'', hAppel:'', hArrivee:'', j1:false, arrondi:false, binome:'' };
+        state.currentDay.interventions.push(newInv);
+        renderCard(id); saveDraft();
+    }
+
+    function renderCard(id) {
+        const list = document.getElementById('interventions_list');
+        const inv = state.currentDay.interventions.find(i => i.id === id);
+        const isAst = inv.mission === 'Astreinte';
+        const isHC = inv.contrat === 'HORS CONTRAT';
+        const displayNum = state.currentDay.interventions.findIndex(i => i.id === id) + 1;
+
+        const card = document.createElement('div');
+        card.className = 'intervention-card'; card.id = `card_${id}`;
+        card.innerHTML = `
+            <div class="card-header" onclick="toggleAccordion(${id})">
+                <div><div class="card-num">INTERVENTION N°${displayNum}</div><div class="card-client-badge" id="cl_head_${id}">${escapeHTML(inv.client) || 'Site...'}</div></div>
+                <span style="color:white; font-size:12px">▼</span>
+            </div>
+            <div class="card-body" id="body_${id}">
+                <div class="seg-group">
+                    <button class="seg-btn normale ${!isAst?'active':''}" onclick="updateMode(${id},'mission','Normale')">NORMALE</button>
+                    <button class="seg-btn astreinte ${isAst?'active':''}" onclick="updateMode(${id},'mission','Astreinte')">ASTREINTE</button>
+                </div>
+                <div class="responsive-grid">
+                    <div class="field-wrap"><label class="field-label">Accompagné par</label>
+                        <select class="field-input" onchange="updateInv(${id}, 'binome', this.value)">
+                            <option value="">Seul</option>
+                            ${LISTE_TECHS.map(t => `<option value="${t}" ${inv.binome === t ? 'selected':''}>${t}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field-wrap"><label class="field-label">Site</label>
+                        <select class="field-input" onchange="onSiteChange(${id}, this)">
+                            <option value="">Sélectionner...</option>
+                            ${SITES_DATA.map(s => `<option value="${s.site}" data-client="${s.client}" ${inv.site === s.site ? 'selected':''}>${s.site}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="seg-group">
+                    <button class="seg-btn contrat ${!isHC?'active':''}" onclick="updateMode(${id},'contrat','CONTRAT')">CONTRAT</button>
+                    <button class="seg-btn hc ${isHC?'active':''}" onclick="updateMode(${id},'contrat','HORS CONTRAT')">HORS CONTRAT</button>
+                </div>
+                ${isAst ? `
+                <div class="field-row">
+                    <div><label class="field-label">H. Appel</label><input type="time" class="field-input" value="${inv.hAppel || ''}" onchange="updateTime(${id},'hAppel',this.value)"></div>
+                    <div><label class="field-label">H. Arrivée</label><input type="time" class="field-input" value="${inv.hArrivee || ''}" onchange="updateInv(${id},'hArrivee',this.value)"></div>
+                </div>` : `
+                <div class="field-wrap"><label class="field-label">Heure Début</label><input type="time" class="field-input" value="${inv.hDebut || ''}" onchange="updateTime(${id},'hDebut',this.value)"></div>
+                `}
+                <div class="field-wrap"><label class="field-label">Heure Fin (arrondi ¼h)</label><input type="time" class="field-input" value="${inv.hf_raw || ''}" onchange="onFinChange(${id},this.value)"></div>
+                <div id="st_${id}">${inv.j1?'<span class="alert-tag j1">⚠ FIN J+1</span>':''}${inv.arrondi?`<span class="alert-tag arrondi">⏱ ARRONDI À ${inv.hFin}</span>`:''}</div>
+                <div class="field-wrap"><label class="field-label">Description</label>
+                    <textarea class="textarea-field" oninput="updateInv(${id},'desc',this.value)" placeholder="Détaillez vos travaux...">${escapeHTML(inv.desc)}</textarea>
+                </div>
+                <button onclick="deleteCard(${id})" style="background:none; border:none; color:var(--rouge); font-size:11px; font-weight:700; text-align: left;">✕ SUPPRIMER L'INTERVENTION</button>
+            </div>
+        `;
+        list.appendChild(card); checkTerminer();
+    }
+
+    function onFinChange(id, val) {
+        const inv = state.currentDay.interventions.find(i => i.id === id);
+        inv.hf_raw = val; if(!val) { inv.hFin = ''; inv.arrondi = false; checkTerminer(); return; }
+        const [h, m] = val.split(':').map(Number); const total = h * 60 + m; const reste = total % 15;
+        if(reste !== 0) {
+            const rounded = total + (15 - reste);
+            inv.hFin = String(Math.floor(rounded/60)%24).padStart(2,'0')+':'+String(rounded%60).padStart(2,'0');
+            inv.arrondi = true;
+        } else { inv.hFin = val; inv.arrondi = false; }
+        const deb = inv.mission === 'Astreinte' ? inv.hAppel : inv.hDebut;
+        if(deb && inv.hFin) {
+            const [h1, m1] = deb.split(':').map(Number); const [h2, m2] = inv.hFin.split(':').map(Number);
+            inv.j1 = (h2*60+m2) < (h1*60+m1);
+        }
+        document.getElementById(`st_${id}`).innerHTML = (inv.j1?'<span class="alert-tag j1">⚠ FIN J+1</span> ':'') + (inv.arrondi?`<span class="alert-tag arrondi">⏱ ARRONDI À ${inv.hFin}</span>`:'');
+        checkTerminer(); saveDraft();
+    }
+
+    function updateMode(id, f, v) {
+        const inv = state.currentDay.interventions.find(i => i.id === id);
+        inv[f] = v; if(f === 'mission') { inv.hDebut = ''; inv.hAppel = ''; inv.hArrivee = ''; inv.hf_raw = ''; inv.hFin = ''; inv.j1 = false; inv.arrondi = false; }
+        document.getElementById('interventions_list').innerHTML = '';
+        state.currentDay.interventions.forEach(i => renderCard(i.id));
         saveDraft();
     }
-}
 
-function checkTerminer() {
-    const ok = state.currentDay.interventions.every(i => i.site && i.hFin);
-    const btn = document.getElementById('btn_terminer');
-    btn.disabled = !ok;
-    if (!ok) { btn.textContent = "SAISIE INCOMPLÈTE"; } else { btn.textContent = "VALIDER LA JOURNÉE"; }
-}
-
-function terminerJournee() {
-    const idx = state.semaineDays.findIndex(d => d.jourLabel === state.currentDay.jourLabel);
-    if(idx > -1) state.semaineDays[idx] = state.currentDay; else state.semaineDays.push(state.currentDay);
-    state.currentDay = null; // On vide la saisie du jour en cours
-    saveDraft();
-    renderWeek(); goTo(3, 4);
-}
-
-async function envoyerSemaine() {
-    const btn = document.getElementById('btn_envoyer');
-    btn.disabled = true; btn.textContent = "ENVOI EN COURS...";
-    const payload = { tech: state.tech, semaine: state.semaine, jours: state.semaineDays };
-    try {
-        await fetch(APPS_SCRIPT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload) 
-        });
-        
-        // SUCCÈS : On supprime le brouillon (mais on garde le nom du technicien !)
-        localStorage.removeItem('adf_draft');
-        
-        goTo(4, 5);
-    } catch(e) { 
-        alert("Erreur de connexion. L'envoi a échoué mais vos données sont sauvées dans le brouillon."); 
-        btn.disabled = false; btn.textContent = "ENVOYER AU BUREAU"; 
+    function onSiteChange(id, sel) {
+        const inv = state.currentDay.interventions.find(i => i.id === id);
+        inv.site = sel.value; inv.client = sel.options[sel.selectedIndex].getAttribute('data-client') || '';
+        document.getElementById(`cl_head_${id}`).textContent = inv.client || 'Site...';
+        checkTerminer(); saveDraft();
     }
-}
+
+    function toggleAccordion(id) {
+        document.querySelectorAll('.card-body').forEach(b => { if(b.id !== `body_${id}`) b.classList.add('collapsed'); });
+        document.getElementById(`body_${id}`).classList.toggle('collapsed');
+    }
+
+    function updateInv(id, f, v) { const i = state.currentDay.interventions.find(x => x.id === id); if(i) i[f] = v; checkTerminer(); saveDraft(); }
+    function updateTime(id, f, v) { updateInv(id, f, v); const i = state.currentDay.interventions.find(x => x.id === id); if(i && i.hf_raw) onFinChange(id, i.hf_raw); }
+    function deleteCard(id) { if(state.currentDay.interventions.length > 1) { state.currentDay.interventions = state.currentDay.interventions.filter(x => x.id !== id); document.getElementById('interventions_list').innerHTML = ''; state.currentDay.interventions.forEach(i => renderCard(i.id)); checkTerminer(); saveDraft(); } }
+    function checkTerminer() { const ok = state.currentDay.interventions.every(i => i.site && i.hFin); const b = document.getElementById('btn_terminer'); b.disabled = !ok; b.textContent = ok ? "VALIDER LA JOURNÉE" : "SAISIE INCOMPLÈTE"; }
+    function terminerJournee() { const idx = state.semaineDays.findIndex(d => d.jourLabel === state.currentDay.jourLabel); if(idx > -1) state.semaineDays[idx] = state.currentDay; else state.semaineDays.push(state.currentDay); state.currentDay = null; saveDraft(); renderWeek(); goTo(3, 4); }
+
+    async function envoyerSemaine() {
+        const btn = document.getElementById('btn_envoyer'); btn.disabled = true; btn.textContent = "ENVOI EN COURS...";
+        try {
+            await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ tech: state.tech, semaine: state.semaine, jours: state.semaineDays }) });
+            localStorage.removeItem('adf_draft');
+            goTo(4, 5);
+        } catch(e) { alert("Erreur connexion."); btn.disabled = false; btn.textContent = "ENVOYER AU BUREAU"; }
+    }
 </script>
 </body>
 </html>
