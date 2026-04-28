@@ -52,7 +52,7 @@
 
         .s-header { background: var(--bleu); padding: calc(13px + env(safe-area-inset-top)) 16px 13px; color: white; flex-shrink: 0; z-index: 30; }
         .header-row { display: flex; align-items: center; gap: 12px; }
-        .btn-back { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-back { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
         /* Défilement fluide rétabli pour mobile */
         .interventions-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 140px; display: flex; flex-direction: column; gap: 10px; }
@@ -82,8 +82,8 @@
 
         .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--gris-border); z-index: 40; }
         .btn-add { width: 54px; height: 54px; border-radius: 50%; background: white; border: 2px solid var(--bleu); color: var(--bleu); font-size: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;}
-        .btn-primary { flex: 1; padding: 16px; background: var(--bleu); color: white; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; cursor: pointer;}
-        .btn-primary:disabled { background: #c0cce0; }
+        .btn-primary { flex: 1; padding: 16px; background: var(--bleu); color: white; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; cursor: pointer; transition: 0.2s;}
+        .btn-primary:disabled { background: #c0cce0; cursor: not-allowed; }
         .btn-compact { background: white; color: var(--bleu); border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; padding: 10px 25px; cursor: pointer; min-width: 150px; }
 
         .alert-tag { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; margin-right: 5px; }
@@ -96,6 +96,24 @@
 
         @media (min-width: 500px) {
             .responsive-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* --- APPARITION DU CURSEUR (SCROLLBAR) --- */
+        .interventions-container, .week-body, #screen2 > div {
+            -webkit-overflow-scrolling: touch; 
+        }
+        ::-webkit-scrollbar {
+            width: 8px; 
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 45, 98, 0.3); 
+            border-radius: 10px; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 45, 98, 0.6); 
         }
     </style>
 </head>
@@ -232,6 +250,16 @@
         return { raw: `${yyyy}-${mm}-${dd}`, formatted: `${dd}/${mm}/${yyyy}` };
     }
 
+    function getISOWeekNumber(dateStr) {
+        if(!dateStr) return '';
+        const [d, m, y] = dateStr.split('/').map(Number);
+        const date = new Date(y, m - 1, d);
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    }
+
     function saveDraft() {
         localStorage.setItem('adf_draft', JSON.stringify(state));
         const hasContent = state.semaineDays.length > 0 || (state.currentDay && state.currentDay.interventions.length > 0);
@@ -301,11 +329,7 @@
 
     function goToRecap() { 
         renderWeek(); 
-        const date = state.semaine.split('/').reverse().join('-');
-        const d = new Date(date); d.setHours(0,0,0,0);
-        d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-        const w1 = new Date(d.getFullYear(), 0, 4);
-        const numSem = 1 + Math.round(((d.getTime() - w1.getTime()) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+        const numSem = getISOWeekNumber(state.semaine);
         document.getElementById('week_header_meta').textContent = state.tech + ' — SEMAINE ' + numSem + ' — ' + state.semaine;
         goTo(2, 4); 
     }
@@ -459,12 +483,35 @@
     function terminerJournee() { const idx = state.semaineDays.findIndex(d => d.jourLabel === state.currentDay.jourLabel); if(idx > -1) state.semaineDays[idx] = state.currentDay; else state.semaineDays.push(state.currentDay); state.currentDay = null; saveDraft(); renderWeek(); goTo(3, 4); }
 
     async function envoyerSemaine() {
-        const btn = document.getElementById('btn_envoyer'); btn.disabled = true; btn.textContent = "ENVOI EN COURS...";
+        const btn = document.getElementById('btn_envoyer'); 
+        btn.disabled = true; 
+        btn.textContent = "ENVOI EN COURS...";
+        
+        // Calcul du format "S" + numéro de semaine (ex: S27)
+        const numSem = getISOWeekNumber(state.semaine);
+        const semaineFormattee = "S" + numSem;
+
+        const payload = { 
+            tech: state.tech, 
+            semaine: semaineFormattee, 
+            jours: state.semaineDays 
+        };
+
         try {
-            await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ tech: state.tech, semaine: state.semaine, jours: state.semaineDays }) });
+            await fetch(APPS_SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify(payload) 
+            });
+            
             localStorage.removeItem('adf_draft');
             goTo(4, 5);
-        } catch(e) { alert("Erreur connexion."); btn.disabled = false; btn.textContent = "ENVOYER AU BUREAU"; }
+        } catch(e) { 
+            alert("Erreur de connexion. L'envoi a échoué mais vos données sont sauvées dans le brouillon."); 
+            btn.disabled = false; 
+            btn.textContent = "ENVOYER AU BUREAU"; 
+        }
     }
 </script>
 </body>
