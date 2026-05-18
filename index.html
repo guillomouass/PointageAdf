@@ -24,7 +24,6 @@
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         
-        /* Correction de la hauteur : 100vh = sécurité, 100dvh = plein écran moderne */
         html, body { 
             height: 100vh;
             height: 100dvh; 
@@ -54,10 +53,11 @@
         .header-row { display: flex; align-items: center; gap: 12px; }
         .btn-back { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-        /* Défilement fluide rétabli pour mobile */
-        .interventions-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 140px; display: flex; flex-direction: column; gap: 10px; }
+        /* Correction du blocage en bas de l'écran avec un bloc invisible */
+        .interventions-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .interventions-container::after { content: ""; display: block; height: 130px; flex-shrink: 0; }
         
-        .intervention-card { background: white; border-radius: var(--radius); border: .5px solid var(--gris-border); box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+        .intervention-card { background: white; border-radius: var(--radius); border: .5px solid var(--gris-border); box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; flex-shrink: 0; }
         .card-header { background: var(--bleu); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
         .card-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: white; font-size: 14px; }
         .card-client-badge { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
@@ -98,7 +98,6 @@
             .responsive-grid { grid-template-columns: 1fr 1fr; }
         }
 
-        /* --- APPARITION DU CURSEUR (SCROLLBAR) --- */
         .interventions-container, .week-body, #screen2 > div {
             -webkit-overflow-scrolling: touch; 
         }
